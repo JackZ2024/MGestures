@@ -1,10 +1,6 @@
-﻿using System;
-using System.IO;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Diagnostics;
-using NativeMultiFileArchiveLib;
 
 namespace IO
 {

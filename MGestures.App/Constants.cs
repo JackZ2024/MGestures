@@ -4,7 +4,7 @@ namespace MGestures.App
     internal static class Constants
         {
         // TODO Jack
-        public const string Identifier = "com.yingdev.MGestures";
+        public const string Identifier = "com.Jack.MGestures";
         public const string CheckForUpdateUrlAppSettingKey = "CheckForUpdateUrl";
 
         public const string ProductHomePageAppSettingKey = "ProductHomePage";

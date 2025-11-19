@@ -16,7 +16,7 @@ namespace MGestures.App
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             // TODO Jack
-            Process.Start("http://tieba.baidu.com/p/3275239932");
+            // Process.Start("http://tieba.baidu.com/p/3275239932");
         }
 
         private void Warn360_Load(object sender, EventArgs e)

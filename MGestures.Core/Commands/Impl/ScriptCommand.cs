@@ -67,7 +67,7 @@ namespace MGestures.Core.Commands.Impl
                               luanet.load_assembly('MGestures.Common');
 
                               GestureModifier=luanet.import_type('MGestures.Core.GestureModifier');  
-                              VK=luanet.import_type('WindowsInput.Native.VirtualKeyCode');
+                              VK=luanet.import_type('WindowsInput.Events.KeyCode');
                               Native=luanet.import_type('MGestures.Common.OsSpecific.Windows.Native');
                             ", "_init");
 

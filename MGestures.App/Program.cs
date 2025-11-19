@@ -200,7 +200,7 @@ namespace MGestures.App
                 
                 config.Save();
             
-                ShowQuickStartGuide(isFirstRun: true);
+                //ShowQuickStartGuide(isFirstRun: true);
                 Warning360Safe();
             }
         }
@@ -410,7 +410,7 @@ namespace MGestures.App
             
             if (isFirstRun)
             {
-                trayIcon.ShowBalloonTip(1000 * 10, "WGstures在这里", "双击图标打开设置，右击查看菜单", ToolTipIcon.Info);
+                //trayIcon.ShowBalloonTip(1000 * 10, "MGstures在这里", "双击图标打开设置，右击查看菜单", ToolTipIcon.Info);
             }
             else
             {
@@ -606,7 +606,7 @@ namespace MGestures.App
         static NotifyIcon CreateNotifyIcon()
         {
             var notifyIcon = new NotifyIcon();
-            notifyIcon.Text = Application.ProductName +" "+ Application.ProductVersion + " by YingDev.com";
+            notifyIcon.Text = Application.ProductName +" "+ Application.ProductVersion + " by YingDev";
 
             var contextMenu1 = new ContextMenuStrip();
 
@@ -619,8 +619,8 @@ namespace MGestures.App
             var menuItem_settings = new ToolStripMenuItem() { Text = "设置" };
             menuItem_settings.Click += menuItem_settings_Click;
 
-            var menuItem_showQuickStart = new ToolStripMenuItem() { Text = "快速入门" };
-            menuItem_showQuickStart.Click += (sender, args) => ShowQuickStartGuide();
+            //var menuItem_showQuickStart = new ToolStripMenuItem() { Text = "快速入门" };
+            //menuItem_showQuickStart.Click += (sender, args) => ShowQuickStartGuide();
 
             /*var menuItem_toggleTray = new MenuItem() { Text = "隐藏 (Shift + 左键 + 中键)" };
             menuItem_toggleTray.Click += (sender, args) =>
@@ -628,7 +628,7 @@ namespace MGestures.App
                ToggleTrayIconVisibility();
             };*/
 
-            contextMenu1.Items.AddRange(new[] { /*menuItem_toggleTray, */menuItem_pause, new ToolStripMenuItem("-"), menuItem_settings,  menuItem_showQuickStart,new ToolStripMenuItem("-"), menuItem_exit });
+            contextMenu1.Items.AddRange(new[] { /*menuItem_toggleTray, */menuItem_pause, new ToolStripMenuItem("-"), menuItem_settings,new ToolStripMenuItem("-"), menuItem_exit });
             notifyIcon.Icon = Resources.trayIcon;
             //notifyIcon.Text = Application.ProductName;
             notifyIcon.ContextMenuStrip = contextMenu1;

@@ -56,7 +56,7 @@
             this.lb_Message.Name = "lb_Message";
             this.lb_Message.Size = new System.Drawing.Size(276, 55);
             this.lb_Message.TabIndex = 0;
-            this.lb_Message.Text = "抱歉！WGesture遇到了一个意想不到的问题，因而无法继续运行。";
+            this.lb_Message.Text = "抱歉！MGesture遇到了一个意想不到的问题，因而无法继续运行。";
             this.lb_Message.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // tb_Detail

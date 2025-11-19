@@ -71,7 +71,7 @@ namespace MGestures.App.Gui.Windows.CommandViews
         {
             // TODO Jack
             new ComboBoxItem("Google", "https://www.google.com/search?q={0}"),
-            new ComboBoxItem("百度","https://www.baidu.com/s?wd={0}"),
+            // new ComboBoxItem("百度","https://www.baidu.com/s?wd={0}"),
             new ComboBoxItem("必应","https://bing.com/search?q={0}") 
         };
 

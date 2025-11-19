@@ -77,7 +77,7 @@ namespace MGestures.App.Gui.Windows
             lb_Version.Text = Application.ProductVersion;
 
             var gestBtns = Controller.PathTrackerTriggerButton;
-            if((gestBtns & GestureTriggerButton.Right) != 0)
+            if ((gestBtns & GestureTriggerButton.Right) != 0)
             {
                 check_gestBtn_Right.Checked = true;
             }
@@ -102,7 +102,9 @@ namespace MGestures.App.Gui.Windows
                                           radio_edge_0, radio_edge_1, radio_edge_2, radio_edge_3};
 
             #region tab about
-            tb_updateLog.Text = Application.ProductName + " " + Application.ProductVersion + Environment.NewLine + Environment.NewLine;
+            //Console.WriteLine(Application.ProductName);
+            //Console.WriteLine(Application.ProductVersion);
+            tb_updateLog.Text = Application.ProductName + "\r\n\r\n";
             tb_updateLog.Text += File.ReadAllText(Path.GetDirectoryName(Application.ExecutablePath) + @"\UpdateLog.txt");
             #endregion
         }
@@ -1060,23 +1062,7 @@ namespace MGestures.App.Gui.Windows
             BringToFront();
             Activate();
         }
-
-
-        #region Tab about
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            var startInfo = new ProcessStartInfo("explorer.exe", AppSettings.ProductHomePage);
-            using (Process.Start(startInfo)) { }
-        }
-        #endregion
-
-        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            // TODO Jack
-            var startInfo = new ProcessStartInfo("explorer.exe", "\"http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=HiYnKS0sKCguJ15vbzB9cXM\"");
-            using (Process.Start(startInfo)) { }
-        }
-
+        
         #region Gesture tab Menu button
         private void pic_menuBtn_Click(object sender, EventArgs e)
         {
@@ -1130,10 +1116,10 @@ namespace MGestures.App.Gui.Windows
                 if (!selectSaveToPath.FileName.EndsWith(".wgb")) args.Cancel = true;
             };
             selectSaveToPath.DefaultExt = ".wgb";
-            selectSaveToPath.Filter = "WGestures备份文件 (*.wgb)|*.wgb";
+            selectSaveToPath.Filter = "MGestures备份文件 (*.wgb)|*.wgb";
 
 
-            selectSaveToPath.FileName = "WGestures " + Application.ProductVersion + ".wgb";
+            selectSaveToPath.FileName = "MGestures " + Application.ProductVersion + ".wgb";
 
             var result = selectSaveToPath.ShowDialog();
             if (result != DialogResult.OK) return;
@@ -1148,11 +1134,11 @@ namespace MGestures.App.Gui.Windows
             try
             {
                 Controller.ExportTo(saveTo);
-                MessageBox.Show("导出成功。", "WGestures导出", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("导出成功。", "MGestures导出", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             } catch (Exception ex)
             {
-                MessageBox.Show("导出失败！原因：" + ex.Message,"WGestures导出失败",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("导出失败！原因：" + ex.Message,"MGestures导出失败",MessageBoxButtons.OK, MessageBoxIcon.Error);
 #if DEBUG
                 throw;
 #endif

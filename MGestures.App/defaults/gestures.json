@@ -2,7 +2,7 @@
     "FileVersion": "3",
     "Apps": {
         "c:\\windows\\system32\\cmd.exe": {
-            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures.App",
+            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures",
             "Order": 2,
             "Exists": true,
             "InheritGlobalGestures": true,
@@ -10,7 +10,7 @@
             "Name": "cmd",
             "GestureIntents": [
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 0,
                     "Gesture": {
                         "GestureButton": 1,
@@ -28,7 +28,7 @@
                     "Name": "关闭"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 1,
                     "Gesture": {
                         "GestureButton": 1,
@@ -43,7 +43,7 @@
                     "Name": "关闭"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 2,
                     "Gesture": {
                         "GestureButton": 1,
@@ -61,7 +61,7 @@
                     "Name": "Quit"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 5,
                     "Gesture": {
                         "GestureButton": 1,
@@ -85,7 +85,7 @@
                     "Name": "粘贴"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 4,
                     "Gesture": {
                         "GestureButton": 1,
@@ -109,7 +109,7 @@
                     "Name": "复制"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 3,
                     "Gesture": {
                         "GestureButton": 1,
@@ -134,7 +134,7 @@
             "IsGesturingEnabled": true
         },
         "c:\\windows\\system32\\dllhost.exe": {
-            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures.App",
+            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures",
             "Order": 3,
             "Exists": true,
             "InheritGlobalGestures": true,
@@ -142,7 +142,7 @@
             "Name": "图片查看",
             "GestureIntents": [
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 0,
                     "Gesture": {
                         "GestureButton": 1,
@@ -160,7 +160,7 @@
                     "Name": "下一张"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 1,
                     "Gesture": {
                         "GestureButton": 1,
@@ -178,7 +178,7 @@
                     "Name": "上一张"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 2,
                     "Gesture": {
                         "GestureButton": 1,
@@ -201,7 +201,7 @@
                     "Name": "关闭"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 3,
                     "Gesture": {
                         "GestureButton": 1,
@@ -221,7 +221,7 @@
                     "Name": "关闭"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 4,
                     "Gesture": {
                         "GestureButton": 1,
@@ -241,7 +241,7 @@
                     "Name": "→"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 5,
                     "Gesture": {
                         "GestureButton": 1,
@@ -264,7 +264,7 @@
             "IsGesturingEnabled": true
         },
         "c:\\windows\\explorer.exe": {
-            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures.App",
+            "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures",
             "Order": 1,
             "Exists": true,
             "InheritGlobalGestures": true,
@@ -272,7 +272,7 @@
             "Name": "文件管理器",
             "GestureIntents": [
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 0,
                     "Gesture": {
                         "GestureButton": 1,
@@ -295,7 +295,7 @@
                     "Name": "新窗口"
                 },
                 {
-                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                    "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                     "Order": 1,
                     "Gesture": {
                         "GestureButton": 1,
@@ -324,7 +324,7 @@
         "Name": "(Global)",
         "GestureIntents": [
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 0,
                 "Gesture": {
                     "GestureButton": 1,
@@ -346,7 +346,7 @@
                 "Name": "复制"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 1,
                 "Gesture": {
                     "GestureButton": 1,
@@ -368,7 +368,7 @@
                 "Name": "粘贴"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 2,
                 "Gesture": {
                     "GestureButton": 1,
@@ -385,7 +385,7 @@
                 "Name": "粘贴并回车"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 3,
                 "Gesture": {
                     "GestureButton": 1,
@@ -407,7 +407,7 @@
                 "Name": "剪切"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 4,
                 "Gesture": {
                     "GestureButton": 1,
@@ -427,7 +427,7 @@
                 "Name": "Web搜索"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 5,
                 "Gesture": {
                     "GestureButton": 1,
@@ -450,7 +450,7 @@
                 "Name": "关闭"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 6,
                 "Gesture": {
                     "GestureButton": 1,
@@ -473,7 +473,7 @@
                 "Name": "退出"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 7,
                 "Gesture": {
                     "GestureButton": 1,
@@ -493,7 +493,7 @@
                 "Name": "强制退出"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 8,
                 "Gesture": {
                     "GestureButton": 1,
@@ -519,7 +519,7 @@
                 "Name": "撤销"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 9,
                 "Gesture": {
                     "GestureButton": 1,
@@ -540,7 +540,7 @@
                 "Name": "退格"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 10,
                 "Gesture": {
                     "GestureButton": 1,
@@ -563,7 +563,7 @@
                 "Name": "删除"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 11,
                 "Gesture": {
                     "GestureButton": 1,
@@ -580,7 +580,7 @@
                 "Name": "最大化"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 12,
                 "Gesture": {
                     "GestureButton": 1,
@@ -597,7 +597,7 @@
                 "Name": "最小化"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 13,
                 "Gesture": {
                     "GestureButton": 1,
@@ -617,7 +617,7 @@
                 "Name": "全屏"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 14,
                 "Gesture": {
                     "GestureButton": 1,
@@ -637,7 +637,7 @@
                 "Name": "开始"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 15,
                 "Gesture": {
                     "GestureButton": 1,
@@ -659,7 +659,7 @@
                 "Name": "切换到桌面"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 16,
                 "Gesture": {
                     "GestureButton": 1,
@@ -681,7 +681,7 @@
                 "Name": "Enter"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 17,
                 "Gesture": {
                     "GestureButton": 1,
@@ -700,7 +700,7 @@
                 "Name": "静音切换"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 18,
                 "Gesture": {
                     "GestureButton": 1,
@@ -719,7 +719,7 @@
                 "Name": "音量"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 19,
                 "Gesture": {
                     "GestureButton": 1,
@@ -745,7 +745,7 @@
                 "Name": "下一首"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 20,
                 "Gesture": {
                     "GestureButton": 1,
@@ -771,7 +771,7 @@
                 "Name": "播放/暂停"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 21,
                 "Gesture": {
                     "GestureButton": 1,
@@ -797,7 +797,7 @@
                 "Name": "下一首"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 22,
                 "Gesture": {
                     "GestureButton": 1,
@@ -823,7 +823,7 @@
                 "Name": "上一首"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 23,
                 "Gesture": {
                     "GestureButton": 1,
@@ -847,7 +847,7 @@
                 "Name": "切换任务"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 24,
                 "Gesture": {
                     "GestureButton": 1,
@@ -865,7 +865,7 @@
                 "Name": "任务选择"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 25,
                 "Gesture": {
                     "GestureButton": 1,
@@ -887,7 +887,7 @@
                 "Name": "Dir"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 26,
                 "Gesture": {
                     "GestureButton": 1,
@@ -909,7 +909,7 @@
                 "Name": "前进"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 27,
                 "Gesture": {
                     "GestureButton": 1,
@@ -931,7 +931,7 @@
                 "Name": "后退"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 28,
                 "Gesture": {
                     "GestureButton": 1,
@@ -954,7 +954,7 @@
                 "Name": "地址栏"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 29,
                 "Gesture": {
                     "GestureButton": 1,
@@ -977,7 +977,7 @@
                 "Name": "添加书签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 30,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1000,7 +1000,7 @@
                 "Name": "新标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 31,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1024,7 +1024,7 @@
                 "Name": "撤销关闭标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 32,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1046,7 +1046,7 @@
                 "Name": "刷新"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 33,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1067,7 +1067,7 @@
                 "Name": "Home"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 34,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1088,7 +1088,7 @@
                 "Name": "End"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 35,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1109,7 +1109,7 @@
                 "Name": "上一个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 36,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1129,7 +1129,7 @@
                 "Name": "下一个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 37,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1149,7 +1149,7 @@
                 "Name": "新标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 38,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1169,7 +1169,7 @@
                 "Name": "关闭"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 39,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1194,7 +1194,7 @@
                 "Name": "强制刷新"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 40,
                 "Gesture": {
                     "GestureButton": 2,
@@ -1215,7 +1215,7 @@
                 "Name": "上个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 41,
                 "Gesture": {
                     "GestureButton": 2,
@@ -1235,7 +1235,7 @@
                 "Name": "下个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 42,
                 "Gesture": {
                     "GestureButton": 2,
@@ -1258,7 +1258,7 @@
                 "Name": "下一首"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 43,
                 "Gesture": {
                     "GestureButton": 2,
@@ -1281,7 +1281,7 @@
                 "Name": "上一首"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 44,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1305,7 +1305,7 @@
                 "Name": "上一个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 45,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1328,7 +1328,7 @@
                 "Name": "下一个标签"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 46,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1347,7 +1347,7 @@
                 "Name": "窗口置顶"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 47,
                 "Gesture": {
                     "GestureButton": 4,
@@ -1370,7 +1370,7 @@
                 "Name": "下一个桌面"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 48,
                 "Gesture": {
                     "GestureButton": 4,
@@ -1393,7 +1393,7 @@
                 "Name": "上一个桌面"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 49,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1415,7 +1415,7 @@
                 "Name": "放大"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 50,
                 "Gesture": {
                     "GestureButton": 1,
@@ -1437,7 +1437,7 @@
                 "Name": "缩小"
             },
             {
-                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures.App",
+                "$type": "MGestures.App.Gui.Model.OrderableIntent, MGestures",
                 "Order": 51,
                 "Gesture": {
                     "GestureButton": 1,

@@ -62,8 +62,8 @@ namespace MGestures.App.Gui.Windows.CommandViews
         private void linkLabel1_LinkClicked(object sender, System.Windows.Forms.LinkLabelLinkClickedEventArgs e)
         {
             // TODO Jack
-            var start = new ProcessStartInfo("explorer", "https://github.com/yingDev/MGestures/wiki/Lua-%E8%84%9A%E6%9C%AC%E6%95%99%E7%A8%8B");
-            Process.Start(start);
+            // var start = new ProcessStartInfo("explorer", "https://github.com/yingDev/MGestures/wiki/Lua-%E8%84%9A%E6%9C%AC%E6%95%99%E7%A8%8B");
+            // Process.Start(start);
         }
 
         private void txt_initScript_KeyDown(object sender, KeyEventArgs e)
