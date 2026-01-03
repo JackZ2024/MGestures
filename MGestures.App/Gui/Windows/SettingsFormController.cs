@@ -137,8 +137,9 @@ namespace MGestures.App.Gui.Windows
 
                 try
                 {
-                    if (value) AutoStarter.Register(Constants.Identifier, Application.ExecutablePath);
-                    else AutoStarter.Unregister(Constants.Identifier);
+                    AutoStarter.SetAdminAutoStart(value, "MGesturesAutoStart");
+                    //if (value) AutoStarter.Register(Constants.Identifier, Application.ExecutablePath);
+                    //else AutoStarter.Unregister(Constants.Identifier);
 
                     _config.Set(ConfigKeys.AutoStart, value);
                 }

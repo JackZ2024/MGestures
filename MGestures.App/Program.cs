@@ -49,6 +49,8 @@ namespace MGestures.App
         {
             Trace.Listeners.Add(new DetailedConsoleListener());
 
+            System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
+
             if (IsDuplicateInstance())
             {
                 //让主实例打开`设置`
@@ -546,19 +548,23 @@ namespace MGestures.App
         //用配置信息去同步自启动
         static void SyncAutoStartState()
         {
-            var fact = AutoStarter.IsRegistered(Constants.Identifier, Application.ExecutablePath);
+            //var fact = AutoStarter.IsRegistered(Constants.Identifier, Application.ExecutablePath);
+
+            bool fact = AutoStarter.IsTaskScheduled("MGesturesAutoStart");
+
             var conf = config.Get<bool>(ConfigKeys.AutoStart);
 
             if (fact == conf && !isFirstRun) return;
 
             try
             {
+                AutoStarter.SetAdminAutoStart(conf, "MGesturesAutoStart");
                 //可能被杀毒软件阻止
-                if (conf) AutoStarter.Register(Constants.Identifier, Application.ExecutablePath);
-                else
-                {
-                    AutoStarter.Unregister(Constants.Identifier);
-                }
+                //if (conf) AutoStarter.Register(Constants.Identifier, Application.ExecutablePath);
+                //else
+                //{
+                //    AutoStarter.Unregister(Constants.Identifier);
+                //}
             }
             catch (Exception)
             {
