@@ -32,7 +32,7 @@ namespace MGestures.App
 
         public static string UserDataDirectory
         {
-            get { return Application.LocalUserAppDataPath; }
+            get { return Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\" + Application.ProductName; }
         }
 
 
@@ -44,12 +44,12 @@ namespace MGestures.App
 
         public static string GesturesFilePath
         {
-            get { return UserDataDirectory + @"\gestures.json"; }
+            get { return UserDataDirectory + @"\gestures.mg"; }
         }
 
         public static string DefaultGesturesFilePath
         {
-            get { return Application.StartupPath + @"\defaults\gestures.json"; }
+            get { return Application.StartupPath + @"\defaults\gestures.mg"; }
         }
 
 

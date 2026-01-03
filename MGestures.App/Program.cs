@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Threading;
-using System.Windows.Forms;
-using MGestures.App.Gui.Windows;
+﻿using MGestures.App.Gui.Windows;
 using MGestures.App.Migrate;
 using MGestures.App.Properties;
 using MGestures.Common;
@@ -18,6 +10,15 @@ using MGestures.Core.Impl.Windows;
 using MGestures.Core.Persistence.Impl;
 using MGestures.Core.Persistence.Impl.Windows;
 using MGestures.View.Impl.Windows;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Reflection;
+using System.Threading;
+using System.Windows.Forms;
 using Timer = System.Windows.Forms.Timer;
 
 namespace MGestures.App
@@ -230,7 +231,7 @@ namespace MGestures.App
             }
             if (!File.Exists(AppSettings.GesturesFilePath))
             {
-                File.Copy(string.Format("{0}/defaults/gestures.json", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
+                File.Copy(string.Format("{0}/defaults/gestures.mg", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
             }
             
             try
@@ -261,7 +262,7 @@ namespace MGestures.App
                 Debug.WriteLine("加载配置文件出错：" + e);
 
                 File.Delete(AppSettings.GesturesFilePath);
-                File.Copy(string.Format("{0}/defaults/gestures.wg", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
+                File.Copy(string.Format("{0}/defaults/gestures.mg", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
 
                 intentStore = new JsonGestureIntentStore(AppSettings.GesturesFilePath, AppSettings.GesturesFileVersion);
             }
@@ -606,7 +607,8 @@ namespace MGestures.App
         static NotifyIcon CreateNotifyIcon()
         {
             var notifyIcon = new NotifyIcon();
-            notifyIcon.Text = Application.ProductName +" "+ Application.ProductVersion + " by YingDev";
+            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            notifyIcon.Text = Application.ProductName +" "+ version + " by Jack";
 
             var contextMenu1 = new ContextMenuStrip();
 
