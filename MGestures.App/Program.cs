@@ -10,6 +10,7 @@ using MGestures.Core.Impl.Windows;
 using MGestures.Core.Persistence.Impl;
 using MGestures.Core.Persistence.Impl.Windows;
 using MGestures.View.Impl.Windows;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -69,6 +70,7 @@ namespace MGestures.App
                 CheckAndDoFirstRunStuff();
 
                 ConfigureComponents();
+                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
                 StartParserThread();
 
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
@@ -441,6 +443,23 @@ namespace MGestures.App
             UpdateTray();
         }
 
+        static void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            switch (e.Reason)
+            {
+                case SessionSwitchReason.SessionLock:
+                    Debug.WriteLine("SessionLock: pausing gesture tracking");
+                    gestureView.ForceHide();
+                    gestureParser.Pause();
+                    break;
+
+                case SessionSwitchReason.SessionUnlock:
+                    Debug.WriteLine("SessionUnlock: resuming gesture tracking");
+                    gestureParser.Resume();
+                    break;
+            }
+        }
+
 #region event handlers
         static void menuItem_settings_Click(object sender, EventArgs eventArgs)
         {
@@ -690,6 +709,8 @@ namespace MGestures.App
         {
             try
             {
+                SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
+
                 foreach (var disposable in componentsToDispose)
                 {
                     if (disposable != null) disposable.Dispose();

@@ -112,6 +112,8 @@ namespace MGestures.View.Impl.Windows
         GraphicsPath _labelPath = new GraphicsPath();
         Font _labelFont = new Font("微软雅黑", 32);
 
+        readonly object _canvasLock = new object();
+
         bool _isCurrentRecognized;
         bool _recognizeStateChanged;
         short _pointCount;
@@ -157,11 +159,16 @@ namespace MGestures.View.Impl.Windows
 
         private void SystemDisplaySettingsChanged(object sender, EventArgs e)
         {
-            _screenBounds = Native.GetScreenBounds();
-            _canvasBuf = new DiBitmap(_screenBounds.Size);
-            _dpiFactor = Native.GetScreenDpi() / 96.0f;
+            var newBounds = Native.GetScreenBounds();
+            var newDpi = Native.GetScreenDpi() / 96.0f;
 
-            
+            lock (_canvasLock)
+            {
+                _screenBounds = newBounds;
+                _dpiFactor = newDpi;
+                // 不释放旧 _canvasBuf，因为其他线程可能正在绘制它
+                _canvasBuf = new DiBitmap(_screenBounds.Size);
+            }
         }
 
         private void InitDefaultProperties()
@@ -400,9 +407,14 @@ namespace MGestures.View.Impl.Windows
             Debug.WriteLine("BeginView");
             StopFadeout();
 
-            if (_canvasBuf.Size != _screenBounds.Size)
+            lock (_canvasLock)
             {
-                _canvasBuf = new DiBitmap(_screenBounds.Size);
+                if (_canvasBuf.Size != _screenBounds.Size)
+                {
+                    var old = _canvasBuf;
+                    _canvasBuf = new DiBitmap(_screenBounds.Size);
+                    old?.Dispose();
+                }
             }
             _canvasOpacity = 255;
             _canvasWindow.Bounds = _screenBounds;
@@ -456,7 +468,9 @@ namespace MGestures.View.Impl.Windows
 
         private void Draw()
         {
-            var g = _canvasBuf.BeginDraw();
+            DiBitmap buf;
+            lock (_canvasLock) buf = _canvasBuf;
+            var g = buf.BeginDraw();
 
             //如果是识别与未识别之间转换，则使用region而非dirtyRect来重绘
             if (_recognizeStateChanged)
@@ -532,27 +546,30 @@ namespace MGestures.View.Impl.Windows
             }
             #endregion
 
-            _canvasBuf.EndDraw();
+            buf.EndDraw();
         }
         
         private void EndView()
         {
             Debug.WriteLine("EndView");
+            DiBitmap buf;
+            lock (_canvasLock) buf = _canvasBuf;
+
             if (ShowPath)
             {
-                var g = _canvasBuf.BeginDraw();
+                var g = buf.BeginDraw();
 
                 _gPath.Widen(_dirtyMarkerPen);
                 g.SetClip(_gPath);
                 g.Clear(Color.Transparent);
-                _canvasBuf.EndDraw();
+                buf.EndDraw();
 
                 var pathDirty = Rectangle.Ceiling(_gPath.GetBounds());
                 pathDirty.Offset(_screenBounds.X, _screenBounds.Y);
                 pathDirty.Intersect(_screenBounds);
                 pathDirty.Offset(-_screenBounds.X, -_screenBounds.Y); //挪回来变为基于窗口的坐标
 
-                _canvasWindow.SetDiBitmap(_canvasBuf, pathDirty);
+                _canvasWindow.SetDiBitmap(buf, pathDirty);
                     
                 _gPath.Reset();
                 _gPathDirty.Reset();
@@ -560,11 +577,11 @@ namespace MGestures.View.Impl.Windows
 
             if (_labelVisible)
             {
-                var g = _canvasBuf.BeginDraw();
+                var g = buf.BeginDraw();
                 g.SetClip(_labelRect);
                 g.Clear(Color.Transparent);
-                _canvasBuf.EndDraw();
-                _canvasWindow.SetDiBitmap(_canvasBuf, Rectangle.Ceiling(_labelRect));
+                buf.EndDraw();
+                _canvasWindow.SetDiBitmap(buf, Rectangle.Ceiling(_labelRect));
                 _labelPath.Reset();
                     
                 HideLabel();
@@ -710,6 +727,20 @@ namespace MGestures.View.Impl.Windows
         }
         #endregion
 
+        public void ForceHide()
+        {
+            if (IsDisposed) return;
+            try
+            {
+                if (_canvasWindow != null)
+                    _canvasWindow.Visible = false;
+            }
+            catch
+            {
+                // 窗口可能已被销毁，忽略
+            }
+        }
+
         public void Dispose()
         {
 
@@ -745,10 +776,13 @@ namespace MGestures.View.Impl.Windows
             _dirtyMarkerPen.Dispose();
             #endregion
 
-            if (_canvasBuf != null)
+            lock (_canvasLock)
             {
-                _canvasBuf.Dispose();
-                _canvasBuf = null;
+                if (_canvasBuf != null)
+                {
+                    _canvasBuf.Dispose();
+                    _canvasBuf = null;
+                }
             }
             if (_canvasWindow != null)
             {
@@ -785,6 +819,7 @@ namespace MGestures.View.Impl.Windows
             }
 
             SystemEvents.DisplaySettingsChanged -= SystemDisplaySettingsChanged;
+            SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
 
 
             Debug.WriteLine("Dispose");
