@@ -230,8 +230,8 @@
             // 
             // openFile_wgb
             // 
-            openFile_wgb.DefaultExt = "wgb";
-            openFile_wgb.Filter = "MGestures备份文件 (*.wgb)|*.wgb|MGestures 1.2手势文件|*.json";
+            openFile_wgb.DefaultExt = "mgb";
+            openFile_wgb.Filter = "MGestures备份文件 (*.mgb)|*.mgb";
             openFile_wgb.Title = "选择要导入的文件";
             // 
             // ImportForm

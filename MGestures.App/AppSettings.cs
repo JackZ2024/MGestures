@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -32,36 +33,31 @@ namespace MGestures.App
 
         public static string UserDataDirectory
         {
-            get { return Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\" + Application.ProductName; }
+            get
+            {
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    Application.ProductName);
+            }
         }
 
 
 
         public static string ConfigFilePath
         {
-            get { return UserDataDirectory + @"\config.plist"; }
+            get { return Path.Combine(UserDataDirectory, "settings.json"); }
         }
 
         public static string GesturesFilePath
         {
-            get { return UserDataDirectory + @"\gestures.mg"; }
+            get { return Path.Combine(UserDataDirectory, "gestures.json"); }
         }
 
         public static string DefaultGesturesFilePath
         {
-            get { return Application.StartupPath + @"\defaults\gestures.mg"; }
+            get { return Path.Combine(Application.StartupPath, "defaults", "gestures.json"); }
         }
 
 
-        public static string ConfigFileVersion
-        {
-            get { return "1"; }
-        }
-
-        public static string GesturesFileVersion
-        {
-            get { return "3"; }
-        }
-        
     }
 }

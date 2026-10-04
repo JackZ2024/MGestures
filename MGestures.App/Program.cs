@@ -1,8 +1,7 @@
 ﻿using MGestures.App.Gui.Windows;
-using MGestures.App.Migrate;
 using MGestures.App.Properties;
 using MGestures.Common;
-using MGestures.Common.Config.Impl;
+using MGestures.Common.IO;
 using MGestures.Common.OsSpecific.Windows;
 using MGestures.Common.Product;
 using MGestures.Core;
@@ -29,7 +28,7 @@ namespace MGestures.App
         static Mutex mutext;
         static GestureParser gestureParser;
 
-        static PlistConfig config;
+        static UserSettingsStore config;
         static CanvasWindowGestureView gestureView;
 
         static readonly IList<IDisposable> componentsToDispose = new List<IDisposable>();
@@ -41,6 +40,9 @@ namespace MGestures.App
 
         static NotifyIcon trayIcon;
         static GlobalHotKeyManager hotkeyMgr;
+        static SynchronizationContext uiContext;
+        static bool resumeAfterSessionUnlock;
+        static bool resumeAfterPowerResume;
         
         //for adding hotkey
         static ToolStripMenuItem menuItem_pause;
@@ -64,13 +66,14 @@ namespace MGestures.App
             try
             {
                 //加载配置文件，如果文件不存在或损坏，则加载默认配置文件
-                LoadFailSafeConfigFile();
+                LoadUserData();
                 
                 SyncAutoStartState();
                 CheckAndDoFirstRunStuff();
 
                 ConfigureComponents();
                 SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+                SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
                 StartParserThread();
 
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
@@ -186,25 +189,8 @@ namespace MGestures.App
 
         static void CheckAndDoFirstRunStuff()
         {
-            //是否是第一次运行
-             var maybeFirstRun = config.Get<bool?>(ConfigKeys.IsFirstRun);
-            isFirstRun = (!maybeFirstRun.HasValue || maybeFirstRun.Value);
-
             if (isFirstRun)
             {
-                //默认值
-                config.Set(ConfigKeys.GestureParserEnableHotCorners, true);
-
-                ImportPrevousVersion();
-
-                //强制值
-                config.Set(ConfigKeys.IsFirstRun, false);
-                config.Set(ConfigKeys.AutoCheckForUpdate, true);
-                config.Set(ConfigKeys.AutoStart, true);
-                config.Set(ConfigKeys.PathTrackerTriggerButton, (int)(GestureTriggerButton.Right | GestureTriggerButton.Middle | GestureTriggerButton.X));
-                
-                config.Save();
-            
                 //ShowQuickStartGuide(isFirstRun: true);
                 Warning360Safe();
             }
@@ -214,6 +200,7 @@ namespace MGestures.App
         {
             Application.EnableVisualStyles();
             Native.SetProcessDPIAware();
+            uiContext = new WindowsFormsSynchronizationContext();
 
             Thread.CurrentThread.IsBackground = false;
             Thread.CurrentThread.Name = "入口线程";
@@ -227,72 +214,47 @@ namespace MGestures.App
             hotkeyMgr = new GlobalHotKeyManager();
         }
         
-        static void LoadFailSafeConfigFile()
+        static void LoadUserData()
         {
-            if (!File.Exists(AppSettings.ConfigFilePath))
-            {
-                File.Copy(string.Format("{0}/defaults/config.plist", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.ConfigFilePath);
-            }
-            if (!File.Exists(AppSettings.GesturesFilePath))
-            {
-                File.Copy(string.Format("{0}/defaults/gestures.mg", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
-            }
-            
-            try
-            { //如果文件损坏，则替换。
-                config = new PlistConfig(AppSettings.ConfigFilePath);
-            }
-            catch (Exception)
-            {
-                Debug.WriteLine("Program.Main: config文件损坏！");
-                File.Delete(AppSettings.ConfigFilePath);
-                File.Copy(string.Format("{0}/defaults/config.plist", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.ConfigFilePath);
+            Directory.CreateDirectory(AppSettings.UserDataDirectory);
 
-                config = new PlistConfig(AppSettings.ConfigFilePath);
+            config = UserSettingsStore.Load(
+                AppSettings.ConfigFilePath,
+                out isFirstRun,
+                out var recoveredSettingsBackup,
+                out var resetSettings);
+
+            var recoveryMessages = new List<string>();
+            if (recoveredSettingsBackup)
+                recoveryMessages.Add("设置文件已损坏，已从备份恢复。");
+            else if (resetSettings)
+                recoveryMessages.Add("设置文件及其备份均无法读取，已恢复默认设置。损坏文件已保留在用户数据目录。");
+
+            if (!File.Exists(AppSettings.GesturesFilePath) &&
+                !File.Exists(AtomicFile.GetBackupPath(AppSettings.GesturesFilePath)))
+            {
+                AtomicFile.Copy(AppSettings.DefaultGesturesFilePath, AppSettings.GesturesFilePath);
             }
 
             try
             {
-                intentStore = new JsonGestureIntentStore(AppSettings.GesturesFilePath, AppSettings.GesturesFileVersion);
-
-                if (config.FileVersion != AppSettings.ConfigFileVersion ||
-                intentStore.FileVersion != AppSettings.GesturesFileVersion)
-                {
-                    throw new Exception("配置文件版本不正确");
-                }
+                intentStore = new JsonGestureIntentStore(AppSettings.GesturesFilePath);
+                if (intentStore.RecoveredFromBackup)
+                    recoveryMessages.Add("手势文件已损坏，已从备份恢复。");
             }
-            catch (Exception e)
+            catch (InvalidDataException exception)
             {
-                Debug.WriteLine("加载配置文件出错：" + e);
-
-                File.Delete(AppSettings.GesturesFilePath);
-                File.Copy(string.Format("{0}/defaults/gestures.mg", Path.GetDirectoryName(Application.ExecutablePath)), AppSettings.GesturesFilePath);
-
-                intentStore = new JsonGestureIntentStore(AppSettings.GesturesFilePath, AppSettings.GesturesFileVersion);
+                Trace.TraceWarning("手势文件无法恢复，已重置为默认值：" + exception.Message);
+                AtomicFile.Copy(AppSettings.DefaultGesturesFilePath, AppSettings.GesturesFilePath);
+                intentStore = new JsonGestureIntentStore(AppSettings.GesturesFilePath);
+                recoveryMessages.Add("手势文件及其备份均无法读取，已恢复默认手势。损坏文件已保留在用户数据目录。");
             }
 
-        }
-
-
-        static void ImportPrevousVersion()
-        {
-            try
+            if (recoveryMessages.Count > 0)
             {
-                //导入先前版本
-                var prevConfigAndGestures = MigrateService.ImportPrevousVersion();
-                if (prevConfigAndGestures == null) return;
-
-                intentStore.Import(prevConfigAndGestures.GestureIntentStore);
-                config.Import(prevConfigAndGestures.Config);
-
-                intentStore.Save();
-            }
-            catch (MigrateException e)
-            {
-                //ignore
-#if DEBUG
-                throw;
-#endif
+                var message = string.Join(Environment.NewLine, recoveryMessages);
+                Trace.TraceWarning(message);
+                MessageBox.Show(message, "MGestures 配置恢复", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -312,47 +274,41 @@ namespace MGestures.App
 #endregion
 
 #region pathTracker
-            pathTracker.DisableInFullscreen = config.Get(ConfigKeys.PathTrackerDisableInFullScreen, true);
-            pathTracker.PreferWindowUnderCursorAsTarget = config.Get(ConfigKeys.PathTrackerPreferCursorWindow, false);
-            pathTracker.TriggerButton = (GestureTriggerButton)config.Get(ConfigKeys.PathTrackerTriggerButton, GestureTriggerButton.Right);
-            pathTracker.InitialValidMove = config.Get(ConfigKeys.PathTrackerInitialValidMove, 4);
-            pathTracker.StayTimeout = config.Get(ConfigKeys.PathTrackerStayTimeout, true);
-            pathTracker.StayTimeoutMillis = config.Get(ConfigKeys.PathTrackerStayTimeoutMillis, 500);
-            pathTracker.InitialStayTimeout = config.Get(ConfigKeys.PathTrackerInitialStayTimeout, true);
-            pathTracker.InitialStayTimeoutMillis = config.Get(ConfigKeys.PathTrackerInitialStayTimoutMillis, 150);
-            pathTracker.RequestPauseResume += paused => menuItem_pause_Click(null,EventArgs.Empty);
-            pathTracker.EnableWindowsKeyGesturing = config.Get(ConfigKeys.EnableWindowsKeyGesturing, false);
-            pathTracker.RequestShowHideTray += ToggleTrayIconVisibility ;
+            pathTracker.DisableInFullscreen = config.Settings.DisableInFullscreen;
+            pathTracker.PreferWindowUnderCursorAsTarget = config.Settings.PreferWindowUnderCursor;
+            pathTracker.TriggerButton = config.Settings.TriggerButton;
+            pathTracker.InitialValidMove = config.Settings.InitialValidMove;
+            pathTracker.StayTimeout = config.Settings.StayTimeout;
+            pathTracker.StayTimeoutMillis = config.Settings.StayTimeoutMilliseconds;
+            pathTracker.InitialStayTimeout = config.Settings.InitialStayTimeout;
+            pathTracker.InitialStayTimeoutMillis = config.Settings.InitialStayTimeoutMilliseconds;
+            pathTracker.RequestPauseResume += paused => RunOnUiThread(TogglePause);
+            pathTracker.EnableWindowsKeyGesturing = config.Settings.EnableWindowsKeyGesturing;
+            pathTracker.RequestShowHideTray += () => RunOnUiThread(ToggleTrayIconVisibility);
             
 #endregion
 
 #region gestureView
-            gestureView.ShowPath = config.Get(ConfigKeys.GestureViewShowPath, true);
-            gestureView.ShowCommandName = config.Get(ConfigKeys.GestureViewShowCommandName, true);
-            gestureView.ViewFadeOut = config.Get(ConfigKeys.GestureViewFadeOut, true);
-            gestureView.PathMainColor = Color.FromArgb(config.Get(ConfigKeys.GestureViewMainPathColor, gestureView.PathMainColor.ToArgb()));
-            gestureView.PathAlternativeColor = Color.FromArgb(config.Get(ConfigKeys.GestureViewAlternativePathColor, gestureView.PathAlternativeColor.ToArgb()));
-            gestureView.PathMiddleBtnMainColor = Color.FromArgb(config.Get(ConfigKeys.GestureViewMiddleBtnMainColor, gestureView.PathMiddleBtnMainColor.ToArgb()));
-            gestureView.PathXBtnMainColor = Color.FromArgb(config.Get(ConfigKeys.GestureViewXBtnPathColor, gestureView.PathXBtnMainColor.ToArgb()));
+            gestureView.ShowPath = config.Settings.ShowGesturePath;
+            gestureView.ShowCommandName = config.Settings.ShowCommandName;
+            gestureView.ViewFadeOut = config.Settings.FadeGesturePath;
+            gestureView.PathMainColor = Color.FromArgb(config.Settings.MainPathColor);
+            gestureView.PathAlternativeColor = Color.FromArgb(config.Settings.AlternativePathColor);
+            gestureView.PathMiddleBtnMainColor = Color.FromArgb(config.Settings.MiddleButtonPathColor);
+            gestureView.PathXBtnMainColor = Color.FromArgb(config.Settings.XButtonPathColor);
             #endregion
 
             #region GestureParser
-            gestureParser.EnableHotCorners = config.Get(ConfigKeys.GestureParserEnableHotCorners, true);
-            gestureParser.Enable8DirGesture = config.Get(ConfigKeys.GestureParserEnable8DirGesture, true);
-            gestureParser.EnableRubEdge = config.Get(ConfigKeys.GestureParserEnableRubEdges, true);
+            gestureParser.EnableHotCorners = config.Settings.EnableHotCorners;
+            gestureParser.Enable8DirGesture = config.Settings.EnableEightDirectionGestures;
+            gestureParser.EnableRubEdge = config.Settings.EnableRubEdges;
             
 #endregion
             //HOt key
             hotkeyMgr.HotKeyPreview += HotkeyMgr_HotKeyPreview;
             hotkeyMgr.HotKeyRegistered += HotkeyMgr_Updated;
             hotkeyMgr.HotKeyUnRegistered += HotkeyMgr_Updated;
-            byte[] pauseHotKey = null;
-
-            //workaround for bug introduced last version
-            try { pauseHotKey = config.Get<byte[]>(ConfigKeys.PauseResumeHotKey, null); } catch(InvalidCastException e)
-            {
-                Debug.WriteLine(e);
-            }
+            var pauseHotKey = config.Settings.PauseResumeHotKey;
             
             if (pauseHotKey != null && pauseHotKey.Length > 0)
             {
@@ -404,7 +360,7 @@ namespace MGestures.App
                 timer.Tick += (sender_1, args_1) =>
                 {
                     timer.Stop();
-                    trayIcon.Visible = config.Get(ConfigKeys.TrayIconVisible, true);
+                    trayIcon.Visible = config.Settings.TrayIconVisible;
                 };
                 timer.Start();
             };
@@ -419,15 +375,14 @@ namespace MGestures.App
             }
             else
             {
-                var showIcon = config.Get<bool?>(ConfigKeys.TrayIconVisible);
-                if (showIcon.HasValue && !showIcon.Value) //隐藏
+                if (!config.Settings.TrayIconVisible) //隐藏
                 {
                     ToggleTrayIconVisibility();
                     //trayIcon.ShowBalloonTip(10* 1000, "MGestures图标将隐藏", "按 Shift+左键+中键 恢复\n再次运行MGestures可打开设置界面", ToolTipIcon.Info);
                 }
             }
             //是否检查更新
-            if (!config.Get<bool?>(ConfigKeys.AutoCheckForUpdate).HasValue || config.Get<bool>(ConfigKeys.AutoCheckForUpdate))
+            if (config.Settings.AutoCheckForUpdate)
             {
                 var checkForUpdateTimer = new Timer { Interval = Constants.AutoCheckForUpdateInterval };
 
@@ -445,19 +400,59 @@ namespace MGestures.App
 
         static void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
         {
+            RunOnUiThread(() => HandleSessionSwitch(e));
+        }
+
+        static void HandleSessionSwitch(SessionSwitchEventArgs e)
+        {
             switch (e.Reason)
             {
                 case SessionSwitchReason.SessionLock:
                     Debug.WriteLine("SessionLock: pausing gesture tracking");
                     gestureView.ForceHide();
-                    gestureParser.Pause();
+                    resumeAfterSessionUnlock = !gestureParser.IsPaused;
+                    if (resumeAfterSessionUnlock) gestureParser.Pause();
                     break;
 
                 case SessionSwitchReason.SessionUnlock:
                     Debug.WriteLine("SessionUnlock: resuming gesture tracking");
-                    gestureParser.Resume();
+                    if (resumeAfterSessionUnlock) gestureParser.Resume();
+                    resumeAfterSessionUnlock = false;
                     break;
             }
+        }
+
+        static void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            RunOnUiThread(() => HandlePowerModeChanged(e));
+        }
+
+        static void HandlePowerModeChanged(PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Suspend)
+            {
+                Debug.WriteLine("PowerSuspend: pausing gesture tracking");
+                gestureView.ForceHide();
+                resumeAfterPowerResume = !gestureParser.IsPaused;
+                if (resumeAfterPowerResume) gestureParser.Pause();
+            }
+            else if (e.Mode == PowerModes.Resume)
+            {
+                Debug.WriteLine("PowerResume: resuming gesture tracking");
+                if (resumeAfterPowerResume) gestureParser.Resume();
+                resumeAfterPowerResume = false;
+            }
+        }
+
+        static void RunOnUiThread(Action action)
+        {
+            if (uiContext == null || SynchronizationContext.Current == uiContext)
+            {
+                action();
+                return;
+            }
+
+            uiContext.Post(_ => action(), null);
         }
 
 #region event handlers
@@ -475,7 +470,6 @@ namespace MGestures.App
         {
             gestureParser.Stop();
             Application.ExitThread();
-            trayIcon.Dispose();
         }
 
 
@@ -484,7 +478,7 @@ namespace MGestures.App
         //仅在启动一段时间后检查一次更新，
         static void ScheduledUpdateCheck(object sender, NotifyIcon tray)
         {
-            if (!config.Get<bool>(ConfigKeys.AutoCheckForUpdate)) return;
+            if (!config.Settings.AutoCheckForUpdate) return;
             return;
             var checker = new VersionChecker(AppSettings.CheckForUpdateUrl);
             checker.Finished += info =>
@@ -499,7 +493,7 @@ namespace MGestures.App
                         using (var frm = new UpdateInfoForm(ConfigurationManager.AppSettings.Get(Constants.ProductHomePageAppSettingKey), info))
                         {
                             frm.ShowDialog();
-                            tray.Visible = config.Get(ConfigKeys.TrayIconVisible, true);
+                            tray.Visible = config.Settings.TrayIconVisible;
                         }
                     };
                     if (!tray.Visible)
@@ -531,9 +525,9 @@ namespace MGestures.App
         static void ToggleTrayIconVisibility()
         {            
             //如果图标当前可见， 而config中设置的值是不可见， 则说明是临时显示; 如果不是临时显示， 才需要修改config
-            if (!(trayIcon.Visible && !config.Get(ConfigKeys.TrayIconVisible, true)))
+            if (!(trayIcon.Visible && !config.Settings.TrayIconVisible))
             {
-                config.Set(ConfigKeys.TrayIconVisible, !trayIcon.Visible);
+                config.Settings.TrayIconVisible = !trayIcon.Visible;
                 config.Save();
             }
 
@@ -570,10 +564,13 @@ namespace MGestures.App
             //var fact = AutoStarter.IsRegistered(Constants.Identifier, Application.ExecutablePath);
 
             bool fact = AutoStarter.IsTaskScheduled("MGesturesAutoStart");
+            bool correctlyConfigured = fact && AutoStarter.HasExpectedAdminAutoStartSettings("MGesturesAutoStart");
 
-            var conf = config.Get<bool>(ConfigKeys.AutoStart);
+            var conf = config.Settings.AutoStart;
 
-            if (fact == conf && !isFirstRun) return;
+            // 旧版本创建的任务即使存在，也可能带有“切换到电池即停止”的默认条件。
+            // 自启动开启时，检测到旧任务便覆盖注册；关闭时仅在任务确实不存在时跳过。
+            if (!isFirstRun && ((conf && correctlyConfigured) || (!conf && !fact))) return;
 
             try
             {
@@ -670,7 +667,7 @@ namespace MGestures.App
 
         private static void GestureParser_StateChanged(GestureParser.State s)
         {
-            UpdateTray();
+            RunOnUiThread(UpdateTray);
         }
 
         private static void UpdateTray()
@@ -710,6 +707,10 @@ namespace MGestures.App
             try
             {
                 SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
+                SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+
+                if (gestureParser != null) gestureParser.Stop();
+                if (trayIcon != null) trayIcon.Dispose();
 
                 foreach (var disposable in componentsToDispose)
                 {
@@ -721,8 +722,7 @@ namespace MGestures.App
             }
             finally
             {
-                mutext.ReleaseMutex();
-                Environment.Exit(1);
+                if (mutext != null) mutext.ReleaseMutex();
             }
         }
     }

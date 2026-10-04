@@ -1097,6 +1097,11 @@ namespace MGestures.App.Gui.Windows
                     if(listApps.Items.Count > 0) LoadApps();
                     LoadHotCornerCommands();
                 }
+                catch (Exception exception)
+                {
+                    args.Success = false;
+                    args.ErrorMessage = "导入失败：" + exception.Message;
+                }
                 finally
                 {
                     SuspendDrawingControl.ResumeDrawing(this);
@@ -1113,13 +1118,13 @@ namespace MGestures.App.Gui.Windows
             var selectSaveToPath = new SaveFileDialog();
             selectSaveToPath.FileOk += (o, args) =>
             {
-                if (!selectSaveToPath.FileName.EndsWith(".wgb")) args.Cancel = true;
+                if (!selectSaveToPath.FileName.EndsWith(".mgb", StringComparison.OrdinalIgnoreCase)) args.Cancel = true;
             };
-            selectSaveToPath.DefaultExt = ".wgb";
-            selectSaveToPath.Filter = "MGestures备份文件 (*.wgb)|*.wgb";
+            selectSaveToPath.DefaultExt = ".mgb";
+            selectSaveToPath.Filter = "MGestures备份文件 (*.mgb)|*.mgb";
 
 
-            selectSaveToPath.FileName = "MGestures " + Application.ProductVersion + ".wgb";
+            selectSaveToPath.FileName = "MG-" + DateTime.Now.ToString("yyyyMMdd") + ".mgb";
 
             var result = selectSaveToPath.ShowDialog();
             if (result != DialogResult.OK) return;
@@ -1128,11 +1133,11 @@ namespace MGestures.App.Gui.Windows
 
             //先应用列表中的顺序，然后保存，然后备份
             ApplyListAppsOrder();
-            Controller.IntentStore.Save();
-            Controller.Config.Save();
+            ApplyListIntentsOrder();
 
             try
             {
+                Controller.SaveUserData();
                 Controller.ExportTo(saveTo);
                 MessageBox.Show("导出成功。", "MGestures导出", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -1180,6 +1185,16 @@ namespace MGestures.App.Gui.Windows
         {
             ApplyListAppsOrder();
             ApplyListIntentsOrder();
+            try
+            {
+                Controller.SaveUserData();
+            }
+            catch (Exception exception)
+            {
+                e.Cancel = true;
+                MessageBox.Show(this, "保存失败，修改仍保留在内存中，请修复问题后重试：" + exception.Message,
+                    "MGestures 配置保存", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ApplyListAppsOrder()

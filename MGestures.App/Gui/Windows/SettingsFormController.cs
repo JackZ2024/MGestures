@@ -4,12 +4,12 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using MGestures.App.Gui.Windows.CommandViews;
-using MGestures.App.Migrate;
+using MGestures.App.Backup;
 using MGestures.Common;
 using MGestures.Common.Annotation;
-using MGestures.Common.Config;
 using MGestures.Common.OsSpecific.Windows;
 using MGestures.Common.Product;
 using MGestures.Core;
@@ -28,14 +28,14 @@ namespace MGestures.App.Gui.Windows
 
         public bool IsDisposed { get; private set; }
 
-        private IConfig _config;
+        private UserSettingsStore _config;
         private GestureParser _parser;
         private Win32MousePathTracker2 _pathTracker;
         private JsonGestureIntentStore _intentStore;
         private CanvasWindowGestureView _gestureView;
         private GlobalHotKeyManager _hotkeyMgr;
 
-        public SettingsFormController(IConfig config, GestureParser parser,
+        public SettingsFormController(UserSettingsStore config, GestureParser parser,
             Win32MousePathTracker2 pathTracker, JsonGestureIntentStore intentStore,
             CanvasWindowGestureView gestureView, GlobalHotKeyManager hotkeyMgr)
         {
@@ -92,7 +92,7 @@ namespace MGestures.App.Gui.Windows
 
         #region tab1 Config Items
         
-        public IConfig Config { get { return _config; } }
+        public UserSettingsStore Config { get { return _config; } }
 
         public GlobalHotKeyManager.HotKey? PauseResumeHotkey
         {
@@ -115,7 +115,7 @@ namespace MGestures.App.Gui.Windows
                     _hotkeyMgr.UnRegisterHotKey(ConfigKeys.PauseResumeHotKey);
                 }
 
-                _config.Set(ConfigKeys.PauseResumeHotKey, value == null ?  new byte[0] : value.Value.ToBytes());
+                _config.Settings.PauseResumeHotKey = value == null ? [] : value.Value.ToBytes();
 
                 OnPropertyChanged("PauseResumeHotKey");
             }
@@ -128,8 +128,7 @@ namespace MGestures.App.Gui.Windows
         {
             get
             {
-                var config = _config.Get<bool>(ConfigKeys.AutoStart);
-                return config;
+                return _config.Settings.AutoStart;
             }
             set
             {
@@ -141,7 +140,7 @@ namespace MGestures.App.Gui.Windows
                     //if (value) AutoStarter.Register(Constants.Identifier, Application.ExecutablePath);
                     //else AutoStarter.Unregister(Constants.Identifier);
 
-                    _config.Set(ConfigKeys.AutoStart, value);
+                    _config.Settings.AutoStart = value;
                 }
                 catch (Exception)
                 {
@@ -159,12 +158,12 @@ namespace MGestures.App.Gui.Windows
         /// </summary>
         public bool AutoCheckForUpdate
         {
-            get { return _config.Get<bool>(ConfigKeys.AutoCheckForUpdate); }
+            get { return _config.Settings.AutoCheckForUpdate; }
             set
             {
                 if (value == AutoCheckForUpdate) return;
 
-                _config.Set(ConfigKeys.AutoCheckForUpdate, value);
+                _config.Settings.AutoCheckForUpdate = value;
 
                 OnPropertyChanged("AutoCheckForUpdate");
             }
@@ -184,7 +183,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerTriggerButton) return;
                 _pathTracker.TriggerButton = value;
 
-                _config.Set(ConfigKeys.PathTrackerTriggerButton, (int)_pathTracker.TriggerButton);
+                _config.Settings.TriggerButton = _pathTracker.TriggerButton;
 
                 OnPropertyChanged("PathTrackerTriggerButton");
             }
@@ -199,7 +198,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerEnableWinKeyGesturing) return;
                 _pathTracker.EnableWindowsKeyGesturing = value;
 
-                _config.Set(ConfigKeys.EnableWindowsKeyGesturing, value);
+                _config.Settings.EnableWindowsKeyGesturing = value;
                 OnPropertyChanged("PathTrackerEnableWinKeyGesturing");
             }
         }
@@ -211,7 +210,7 @@ namespace MGestures.App.Gui.Windows
             {
                 if (value == _parser.Enable8DirGesture) return;
                 _parser.Enable8DirGesture = value;
-                _config.Set(ConfigKeys.GestureParserEnable8DirGesture, value);
+                _config.Settings.EnableEightDirectionGestures = value;
                 OnPropertyChanged("GestureParserEnable8DirGesture");
             }
         }
@@ -227,7 +226,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerInitialValidMove) return;
 
                 _pathTracker.InitialValidMove = value;
-                _config.Set(ConfigKeys.PathTrackerInitialValidMove, _pathTracker.InitialValidMove);
+                _config.Settings.InitialValidMove = _pathTracker.InitialValidMove;
 
                 OnPropertyChanged("PathTrackerInitialValidMove");
             }
@@ -241,7 +240,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerInitialStayTimeout) return;
 
                 _pathTracker.InitialStayTimeout = value;
-                _config.Set(ConfigKeys.PathTrackerInitialStayTimeout, value);
+                _config.Settings.InitialStayTimeout = value;
 
                 OnPropertyChanged("PathTrackerInitialStayTimeout");
             }
@@ -252,10 +251,10 @@ namespace MGestures.App.Gui.Windows
             get { return _pathTracker.InitialStayTimeoutMillis; }
             set
             {
-                if (value == PathTrackerStayTimeoutMillis) return;
+                if (value == PathTrackerInitalStayTimeoutMillis) return;
 
                 _pathTracker.InitialStayTimeoutMillis = value;
-                _config.Set(ConfigKeys.PathTrackerInitialStayTimoutMillis, value);
+                _config.Settings.InitialStayTimeoutMilliseconds = value;
 
                 OnPropertyChanged("PathTrackerInitalStayTimeoutMillis");
             }
@@ -269,7 +268,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerDisableInFullScreen) return;
 
                 _pathTracker.DisableInFullscreen = value;
-                _config.Set(ConfigKeys.PathTrackerDisableInFullScreen, value);
+                _config.Settings.DisableInFullscreen = value;
 
                 OnPropertyChanged("PathTrackerDisableInFullScreen");
             }
@@ -286,7 +285,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerStayTimeout) return;
 
                 _pathTracker.StayTimeout = value;
-                _config.Set(ConfigKeys.PathTrackerStayTimeout, _pathTracker.StayTimeout);
+                _config.Settings.StayTimeout = _pathTracker.StayTimeout;
 
                 OnPropertyChanged("PathTrackerStayTimeout");
             }
@@ -302,7 +301,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == PathTrackerStayTimeoutMillis) return;
 
                 _pathTracker.StayTimeoutMillis = value;
-                _config.Set(ConfigKeys.PathTrackerStayTimeoutMillis, _pathTracker.StayTimeoutMillis);
+                _config.Settings.StayTimeoutMilliseconds = _pathTracker.StayTimeoutMillis;
 
                 OnPropertyChanged("PathTrackerStayTimeoutMillis");
             }
@@ -318,7 +317,7 @@ namespace MGestures.App.Gui.Windows
             {
                 if (value == PathTrackerPreferCursorWindow) return;
                 _pathTracker.PreferWindowUnderCursorAsTarget = value;
-                _config.Set(ConfigKeys.PathTrackerPreferCursorWindow, value);
+                _config.Settings.PreferWindowUnderCursor = value;
 
                 OnPropertyChanged("PathTrackerPreferCursorWindow");
             }
@@ -334,7 +333,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewShowPath) return;
 
                 _gestureView.ShowPath = value;
-                _config.Set(ConfigKeys.GestureViewShowPath, value);
+                _config.Settings.ShowGesturePath = value;
 
                 OnPropertyChanged("GestureViewShowPath");
             }
@@ -350,7 +349,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewShowCommandName) return;
 
                 _gestureView.ShowCommandName = value;
-                _config.Set(ConfigKeys.GestureViewShowCommandName, value);
+                _config.Settings.ShowCommandName = value;
 
                 OnPropertyChanged("GestureViewShowCommandName");
             }
@@ -366,7 +365,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewFadeOut) return;
 
                 _gestureView.ViewFadeOut = value;
-                _config.Set(ConfigKeys.GestureViewFadeOut, value);
+                _config.Settings.FadeGesturePath = value;
 
                 OnPropertyChanged("GestureViewFadeOut");
             }
@@ -382,7 +381,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewMainPathColor) return;
 
                 _gestureView.PathMainColor = value;
-                _config.Set(ConfigKeys.GestureViewMainPathColor, value.ToArgb());
+                _config.Settings.MainPathColor = value.ToArgb();
 
                 OnPropertyChanged("GestureViewMainPathColor");
             }
@@ -398,7 +397,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewAlternativePathColor) return;
 
                 _gestureView.PathAlternativeColor = value;
-                _config.Set(ConfigKeys.GestureViewAlternativePathColor, value.ToArgb());
+                _config.Settings.AlternativePathColor = value.ToArgb();
 
                 OnPropertyChanged("GestureViewAlternativePathColor");
             }
@@ -412,7 +411,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureViewMiddleBtnMainColor) return;
 
                 _gestureView.PathMiddleBtnMainColor = value;
-                _config.Set(ConfigKeys.GestureViewMiddleBtnMainColor, value.ToArgb());
+                _config.Settings.MiddleButtonPathColor = value.ToArgb();
 
                 OnPropertyChanged("GestureViewMiddleBtnMainColor");
             }
@@ -426,7 +425,7 @@ namespace MGestures.App.Gui.Windows
                 if (value == GestureVieXBtnMainColor) return;
 
                 _gestureView.PathXBtnMainColor = value;
-                _config.Set(ConfigKeys.GestureViewXBtnPathColor, value.ToArgb());
+                _config.Settings.XButtonPathColor = value.ToArgb();
 
                 OnPropertyChanged("GestureVieXBtnMainColor");
             }
@@ -437,57 +436,92 @@ namespace MGestures.App.Gui.Windows
 
         internal void ExportTo(string filePath)
         {
-            MigrateService.ExportTo(filePath);
+            BackupService.ExportTo(filePath);
         }
 
         internal void RestoreDefaultGestures()
         {
-            _intentStore.Import(MigrateService.Import(AppSettings.DefaultGesturesFilePath).GestureIntentStore, replace: true);
+            using var stream = File.OpenRead(AppSettings.DefaultGesturesFilePath);
+            var defaults = new JsonGestureIntentStore(stream, closeStream: false);
+            _intentStore.Import(defaults, replace: true);
             OnPropertyChanged("IntentStore");
         }
 
-        internal void Import(ConfigAndGestures configAndGestures, bool importConfig, bool importGestures, bool mergeGestures)
+        internal void Import(BackupContents configAndGestures, bool importConfig, bool importGestures, bool mergeGestures)
         {
-            //config 必然是合并
-            if (importConfig)
-            {
-                _config.Import(configAndGestures.Config);
-                ReApplyConfig();
-            }
+            var settingsSnapshot = _config.CreateSnapshot();
+            var gesturesSnapshot = _intentStore.CreateSnapshot();
 
-            if (importGestures)
+            try
             {
-                _intentStore.Import(configAndGestures.GestureIntentStore, replace: !mergeGestures);
-                OnPropertyChanged("IntentStore");
-            }
+                if (importConfig)
+                {
+                    _config.Replace(configAndGestures.Settings);
+                    ReApplySettings();
+                }
 
+                if (importGestures)
+                {
+                    _intentStore.Import(configAndGestures.GestureIntentStore, replace: !mergeGestures);
+                    OnPropertyChanged("IntentStore");
+                }
+
+                if (importConfig) _config.Save();
+                if (importGestures) _intentStore.Save();
+            }
+            catch (Exception importException)
+            {
+                _config.Replace(settingsSnapshot);
+                _intentStore.Import(gesturesSnapshot, replace: true);
+                var failures = new List<Exception> { importException };
+                if (importConfig)
+                {
+                    try { ReApplySettings(); }
+                    catch (Exception exception) { failures.Add(exception); }
+                    try { _config.Save(); }
+                    catch (Exception exception) { failures.Add(exception); }
+                }
+                if (importGestures)
+                {
+                    try { _intentStore.Save(); }
+                    catch (Exception exception) { failures.Add(exception); }
+                }
+                if (failures.Count > 1)
+                    throw new AggregateException("导入失败，部分恢复操作未成功，请检查磁盘或权限后重试。", failures);
+                throw;
+            }
         }
 
-        private void ReApplyConfig()
+        private void ReApplySettings()
         {
-            AutoStart = _config.Get<bool>(ConfigKeys.AutoStart, AutoStart);
-            AutoCheckForUpdate = _config.Get<bool>(ConfigKeys.AutoCheckForUpdate, AutoCheckForUpdate);
-            
-            //PathTrackerGestureButton = _config.Get<int>(ConfigKeys.PathTrackerGestureButton);
-            PathTrackerInitialValidMove = _config.Get<int>(ConfigKeys.PathTrackerInitialValidMove, PathTrackerInitialValidMove);
-            PathTrackerInitialStayTimeout = _config.Get<bool>(ConfigKeys.PathTrackerInitialStayTimeout, PathTrackerInitialStayTimeout);
-            PathTrackerInitalStayTimeoutMillis = _config.Get<int>(ConfigKeys.PathTrackerInitialStayTimoutMillis, PathTrackerInitalStayTimeoutMillis);
-            PathTrackerPreferCursorWindow = _config.Get<bool>(ConfigKeys.PathTrackerPreferCursorWindow, PathTrackerPreferCursorWindow);
+            var settings = _config.Settings;
+            AutoStarter.SetAdminAutoStart(settings.AutoStart, "MGesturesAutoStart");
 
-            PathTrackerDisableInFullScreen = _config.Get<bool>(ConfigKeys.PathTrackerDisableInFullScreen, PathTrackerDisableInFullScreen);
+            PathTrackerTriggerButton = settings.TriggerButton;
+            PathTrackerInitialValidMove = settings.InitialValidMove;
+            PathTrackerInitialStayTimeout = settings.InitialStayTimeout;
+            PathTrackerInitalStayTimeoutMillis = settings.InitialStayTimeoutMilliseconds;
+            PathTrackerPreferCursorWindow = settings.PreferWindowUnderCursor;
+            PathTrackerDisableInFullScreen = settings.DisableInFullscreen;
+            PathTrackerStayTimeout = settings.StayTimeout;
+            PathTrackerStayTimeoutMillis = settings.StayTimeoutMilliseconds;
+            PathTrackerEnableWinKeyGesturing = settings.EnableWindowsKeyGesturing;
 
-            PathTrackerStayTimeout = _config.Get<bool>(ConfigKeys.PathTrackerStayTimeout, PathTrackerStayTimeout);
-            PathTrackerStayTimeoutMillis = _config.Get<int>(ConfigKeys.PathTrackerStayTimeoutMillis, PathTrackerStayTimeoutMillis);
+            GestureViewShowPath = settings.ShowGesturePath;
+            GestureViewShowCommandName = settings.ShowCommandName;
+            GestureViewFadeOut = settings.FadeGesturePath;
+            GestureViewMainPathColor = Color.FromArgb(settings.MainPathColor);
+            GestureViewAlternativePathColor = Color.FromArgb(settings.AlternativePathColor);
+            GestureViewMiddleBtnMainColor = Color.FromArgb(settings.MiddleButtonPathColor);
+            GestureVieXBtnMainColor = Color.FromArgb(settings.XButtonPathColor);
 
-            GestureViewShowPath = _config.Get<bool>(ConfigKeys.GestureViewShowPath, GestureViewShowPath);
-            GestureViewShowCommandName = _config.Get<bool>(ConfigKeys.GestureViewShowCommandName, GestureViewShowCommandName);
-            GestureViewFadeOut = _config.Get<bool>(ConfigKeys.GestureViewFadeOut, GestureViewFadeOut);
-            GestureViewMainPathColor = Color.FromArgb(_config.Get<int>(ConfigKeys.GestureViewMainPathColor, GestureViewMainPathColor.ToArgb()));
-            GestureViewAlternativePathColor = Color.FromArgb(_config.Get<int>(ConfigKeys.GestureViewAlternativePathColor, GestureViewAlternativePathColor.ToArgb()));
-            GestureViewMiddleBtnMainColor = Color.FromArgb(_config.Get<int>(ConfigKeys.GestureViewMiddleBtnMainColor, GestureViewMiddleBtnMainColor.ToArgb()));
+            GestureParserEnableHotCorners = settings.EnableHotCorners;
+            GestureParserEnable8DirGesture = settings.EnableEightDirectionGestures;
+            GestureParserEnableRubEdges = settings.EnableRubEdges;
 
-            GestureParserEnableHotCorners = _config.Get(ConfigKeys.GestureParserEnableHotCorners, _parser.EnableHotCorners);
-            GestureParserEnable8DirGesture = _config.Get(ConfigKeys.GestureParserEnable8DirGesture, _parser.Enable8DirGesture);
+            PauseResumeHotkey = settings.PauseResumeHotKey.Length == 0
+                ? null
+                : GlobalHotKeyManager.HotKey.FromBytes(settings.PauseResumeHotKey);
 
         }
 
@@ -527,7 +561,7 @@ namespace MGestures.App.Gui.Windows
             {
                 if (value == _parser.EnableHotCorners) return;
                 _parser.EnableHotCorners = value;
-                Config.Set(ConfigKeys.GestureParserEnableHotCorners, value);
+                Config.Settings.EnableHotCorners = value;
                 OnPropertyChanged("GestureParserEnableHotCorners");
             }
         }
@@ -539,7 +573,7 @@ namespace MGestures.App.Gui.Windows
             {
                 if (value == _parser.EnableRubEdge) return;
                 _parser.EnableRubEdge = value;
-                Config.Set(ConfigKeys.GestureParserEnableRubEdges, value);
+                Config.Settings.EnableRubEdges = value;
                 OnPropertyChanged("GestureParserEnableRubEdges");
             }
         }
@@ -552,9 +586,6 @@ namespace MGestures.App.Gui.Windows
         {
             _form.ShowDialog();
 
-            _config.Save();
-            _intentStore.Save();
-
             using (var proc = Process.GetCurrentProcess())
             {
                 Native.SetProcessWorkingSetSize(proc.Handle, -1, -1);
@@ -562,6 +593,12 @@ namespace MGestures.App.Gui.Windows
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
 
+        }
+
+        internal void SaveUserData()
+        {
+            _config.Save();
+            _intentStore.Save();
         }
 
         public void BringToFront()

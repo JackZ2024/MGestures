@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using MGestures.App.Migrate;
+using MGestures.App.Backup;
 using MGestures.App.Properties;
 
 namespace MGestures.App.Gui.Windows
@@ -14,14 +14,14 @@ namespace MGestures.App.Gui.Windows
     {
         internal class ImportEventArgs : EventArgs
         {
-            public ConfigAndGestures ConfigAndGestures { get; private set; }
+            public BackupContents ConfigAndGestures { get; private set; }
             public ImportOption GesturesImportOption { get; private set; }
             public ImportOption ConfigImportOption { get; private set; }
 
             public bool Success { get; set; }
             public string ErrorMessage { get; set; }
 
-            public ImportEventArgs(ConfigAndGestures confAndGest, ImportOption gestImpOpt, ImportOption confImpOpt)
+            public ImportEventArgs(BackupContents confAndGest, ImportOption gestImpOpt, ImportOption confImpOpt)
             {
                 Success = true;
 
@@ -34,7 +34,7 @@ namespace MGestures.App.Gui.Windows
         private ImportOption _gesturesImportOption = ImportOption.None;
         private ImportOption _configImportOption = ImportOption.None;
 
-        private ConfigAndGestures _configAndGestures;
+        private BackupContents? _configAndGestures;
 
         private string _filePath;
 
@@ -46,6 +46,7 @@ namespace MGestures.App.Gui.Windows
             Icon = Resources.icon;
 
             combo_importGesturesOption.SelectedIndex = 0;
+            btnOk.Enabled = false;
         }
 
         private void btn_selectWgb_Click(object sender, EventArgs e)
@@ -54,21 +55,24 @@ namespace MGestures.App.Gui.Windows
             if (result == DialogResult.OK)
             {
                 _filePath = openFile_wgb.FileName;
+                _configAndGestures = null;
+                btnOk.Enabled = false;
+                group_importOptions.Visible = false;
                 HideError();
                 
 
                 try
                 {
-                    _configAndGestures = MigrateService.Import(_filePath);
+                    _configAndGestures = BackupService.Import(_filePath);
                 }
-                catch (MigrateException ex)
+                catch (BackupException ex)
                 {
                     ShowError(ex.Message);
                     return;
                 }
 
-                var containsGestures = _configAndGestures.GestureIntentStore != null;
-                var containsConfig = _configAndGestures.Config != null;
+                const bool containsGestures = true;
+                const bool containsConfig = true;
 
                 check_importGestures.Checked = containsGestures;
                 check_importGestures.Enabled = containsGestures;
@@ -78,6 +82,11 @@ namespace MGestures.App.Gui.Windows
 
                 txt_filePath.Text = _filePath;
                 group_importOptions.Visible = true;
+                _gesturesImportOption = check_importGestures.Checked
+                    ? (combo_importGesturesOption.SelectedIndex == 0 ? ImportOption.Merge : ImportOption.Replace)
+                    : ImportOption.None;
+                _configImportOption = check_importConfig.Checked ? ImportOption.Replace : ImportOption.None;
+                Validate();
             }
         }
 
@@ -118,7 +127,7 @@ namespace MGestures.App.Gui.Windows
             }
             else
             {
-                _configImportOption = ImportOption.Merge;
+                _configImportOption = ImportOption.Replace;
             }
 
             Validate();
@@ -141,7 +150,7 @@ namespace MGestures.App.Gui.Windows
 
         private void OnImport()
         {
-            if (Import != null)
+            if (Import != null && _configAndGestures != null)
             {
                 var args = new ImportEventArgs(_configAndGestures, _gesturesImportOption, _configImportOption);
                 Import(this, args);
@@ -174,7 +183,7 @@ namespace MGestures.App.Gui.Windows
 
         new private void Validate()
         {
-            if (!(check_importConfig.Checked || check_importGestures.Checked))
+            if (_configAndGestures == null || !(check_importConfig.Checked || check_importGestures.Checked))
             {
                 btnOk.Enabled = false;
             }

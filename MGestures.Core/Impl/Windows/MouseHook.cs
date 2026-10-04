@@ -19,6 +19,7 @@ namespace MGestures.Core.Impl.Windows
         private IntPtr _kbdHookId;
         private uint _hookThreadNativeId;
         private Thread _hookThread;
+        private readonly object _uninstallLock = new object();
 
         private Native.LowLevelMouseHookProc _mouseHookProc;
         private Native.LowLevelkeyboardHookProc _kbdHookProc;
@@ -97,13 +98,18 @@ namespace MGestures.Core.Impl.Windows
             _kbdHookId = IntPtr.Zero;
 
 
-            if (Native.UnhookWindowsHookEx(hookId) && Native.UnhookWindowsHookEx(kbdHookId))
+            // 两个钩子必须分别卸载，不能让鼠标钩子的失败跳过键盘钩子。
+            var mouseUnhooked = hookId == IntPtr.Zero || Native.UnhookWindowsHookEx(hookId);
+            var mouseError = mouseUnhooked ? 0 : Native.GetLastError();
+            var keyboardUnhooked = kbdHookId == IntPtr.Zero || Native.UnhookWindowsHookEx(kbdHookId);
+            var keyboardError = keyboardUnhooked ? 0 : Native.GetLastError();
+            if (mouseUnhooked && keyboardUnhooked)
             {
                 Debug.WriteLine("钩子已卸载");
             }
             else
             {
-                throw new Win32Exception("Fail to uinstall mouse hook: " + Native.GetLastError());
+                throw new Win32Exception($"Fail to uninstall hooks: mouse={mouseError}, keyboard={keyboardError}");
             }
         }
 
@@ -116,6 +122,8 @@ namespace MGestures.Core.Impl.Windows
                 _install();
                 Debug.WriteLine("钩子安装成功");
 
+                // PostThreadMessage 需要目标线程先建立消息队列。
+                Native.PeekMessage(out _, IntPtr.Zero, 0, 0, 0);
                 _hookThreadNativeId = Native.GetCurrentThreadId();
 
                 try
@@ -141,10 +149,9 @@ namespace MGestures.Core.Impl.Windows
                                 break;
                                 
                             case (uint)User32.WM.WM_CLOSE:
-                                @continue = false;
-                                _uinstall();
-                                _hookThreadNativeId = 0;
-                                break;
+                                // 直接结束线程，避免下面的 GotMessage 分支重新开启循环。
+                                // 钩子统一在 finally 中卸载。
+                                return;
                         }
 
                         if (GotMessage != null)
@@ -161,9 +168,11 @@ namespace MGestures.Core.Impl.Windows
                 {
                     if (_hookId != IntPtr.Zero) Native.UnhookWindowsHookEx(_hookId);
                     if (_kbdHookId != IntPtr.Zero) Native.UnhookWindowsHookEx(_kbdHookId);
+                    _hookId = IntPtr.Zero;
+                    _kbdHookId = IntPtr.Zero;
+                    _hookThreadNativeId = 0;
+                    Debug.WriteLine("钩子线程结束");
                 }
-
-                Debug.WriteLine("钩子线程结束");
 
                 //GC.KeepAlive(hookProc);
 
@@ -177,17 +186,22 @@ namespace MGestures.Core.Impl.Windows
 
         public void Uninstall()
         {
-            if (_hookId == IntPtr.Zero || _kbdHookId == IntPtr.Zero || _hookThreadNativeId == 0) return;
-            //发送一个消息给钩子线程,使其GetMessage退出
-            if (_hookThread != null && _hookThread.IsAlive)
+            // UI 清理和解析线程停止可能同时调用，只允许一个调用方发送并等待退出。
+            lock (_uninstallLock)
             {
-                Native.PostThreadMessage(_hookThreadNativeId, (uint)User32.WM.WM_CLOSE, UIntPtr.Zero, IntPtr.Zero);
-
-                if (!_hookThread.Join(1000 * 3))
+                var thread = _hookThread;
+                if (thread == null) return;
+                if (thread.IsAlive)
                 {
-                    throw new TimeoutException("等待钩子线程结束超时");
-                }
+                    if (_hookThreadNativeId == 0) return;
+                    if (!Native.PostThreadMessage(_hookThreadNativeId, (uint)User32.WM.WM_CLOSE, UIntPtr.Zero, IntPtr.Zero))
+                        throw new Win32Exception("无法发送钩子线程停止消息: " + Native.GetLastError());
 
+                    // 线程不能等待自身；收到关闭消息后会执行 finally。
+                    if (Thread.CurrentThread == thread) return;
+                    if (!thread.Join(1000 * 3))
+                        throw new TimeoutException("等待钩子线程结束超时");
+                }
                 _hookThread = null;
             }
         }

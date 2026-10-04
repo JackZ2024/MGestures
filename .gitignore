@@ -171,6 +171,8 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 Backup*/
+!MGestures.App/Backup/
+!MGestures.App/Backup/*.cs
 UpgradeLog*.XML
 UpgradeLog*.htm
 

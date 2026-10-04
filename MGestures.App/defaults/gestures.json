@@ -1,5 +1,5 @@
 {
-    "FileVersion": "3",
+    "SchemaVersion": 1,
     "Apps": {
         "c:\\windows\\system32\\cmd.exe": {
             "$type": "MGestures.App.Gui.Model.OrderableExeApp, MGestures",

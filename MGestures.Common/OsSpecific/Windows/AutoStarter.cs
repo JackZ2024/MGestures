@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Security;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
@@ -142,6 +145,42 @@ namespace MGestures.Common.OsSpecific.Windows
             }
         }
 
+        /// <summary>
+        /// 判断现有任务是否具备常驻托盘程序需要的关键设置。
+        /// 不能只检查任务是否存在：旧版本创建的任务可能会在切换到电池时被系统终止。
+        /// </summary>
+        public static bool HasExpectedAdminAutoStartSettings(string taskName)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "schtasks",
+                    Arguments = $"/Query /TN \"{taskName}\" /XML",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using (var process = Process.Start(startInfo))
+                {
+                    var xml = process.StandardOutput.ReadToEnd();
+                    process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    return process.ExitCode == 0
+                        && xml.Contains("<DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>")
+                        && xml.Contains("<StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>")
+                        && xml.Contains("<ExecutionTimeLimit>PT0S</ExecutionTimeLimit>");
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// 设置或取消管理员身份开机自启动
@@ -161,17 +200,15 @@ namespace MGestures.Common.OsSpecific.Windows
             }
 
             string cmdArgs;
+            string taskXmlPath = null;
 
             if (enable)
             {
-                // 构造 schtasks 命令
-                // /Create : 创建
-                // /TN : 任务名称
-                // /TR : 运行路径 (注意路径可能有空格，需要加转义引号)
-                // /SC ONLOGON : 用户登录时触发
-                // /RL HIGHEST : 关键点！使用最高权限运行（绕过UAC）
-                // /F : 强制覆盖已存在的任务
-                cmdArgs = $"/Create /TN \"{taskName}\" /TR \"\\\"{exePath}\\\"\" /SC ONLOGON /RL HIGHEST /F";
+                // schtasks 的命令行无法完整指定电源条件和 ExecutionTimeLimit。
+                // 使用 XML 注册，避免默认设置在切换到电池或运行满 72 小时时结束常驻程序。
+                taskXmlPath = Path.Combine(Path.GetTempPath(), $"{taskName}-{Guid.NewGuid():N}.xml");
+                System.IO.File.WriteAllText(taskXmlPath, CreateAdminAutoStartTaskXml(exePath));
+                cmdArgs = $"/Create /TN \"{taskName}\" /XML \"{taskXmlPath}\" /F";
             }
             else
             {
@@ -215,6 +252,44 @@ namespace MGestures.Common.OsSpecific.Windows
             {
                 MessageBox.Show($"执行命令出错: {ex.Message}", "异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                if (taskXmlPath != null && System.IO.File.Exists(taskXmlPath)) System.IO.File.Delete(taskXmlPath);
+            }
+        }
+
+        private static string CreateAdminAutoStartTaskXml(string exePath)
+        {
+            var userSid = WindowsIdentity.GetCurrent().User?.Value
+                ?? throw new InvalidOperationException("无法获取当前用户的 SID。");
+            var escapedExePath = SecurityElement.Escape(exePath);
+            var escapedWorkingDirectory = SecurityElement.Escape(Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory);
+            var startBoundary = DateTime.Now.ToString("s", CultureInfo.InvariantCulture);
+
+            return $@"<?xml version=""1.0"" encoding=""UTF-16""?>
+<Task version=""1.2"" xmlns=""http://schemas.microsoft.com/windows/2004/02/mit/task"">
+  <RegistrationInfo><Date>{startBoundary}</Date><Author>{SecurityElement.Escape(WindowsIdentity.GetCurrent().Name)}</Author></RegistrationInfo>
+  <Principals><Principal id=""Author""><UserId>{userSid}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings><StopOnIdleEnd>false</StopOnIdleEnd><RestartOnIdle>false</RestartOnIdle></IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure><Interval>PT1M</Interval><Count>3</Count></RestartOnFailure>
+  </Settings>
+  <Triggers><LogonTrigger><StartBoundary>{startBoundary}</StartBoundary><Enabled>true</Enabled></LogonTrigger></Triggers>
+  <Actions Context=""Author""><Exec><Command>{escapedExePath}</Command><WorkingDirectory>{escapedWorkingDirectory}</WorkingDirectory></Exec></Actions>
+</Task>";
         }
 
         /// <summary>
