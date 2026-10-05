@@ -205,7 +205,6 @@ namespace MGestures.App
         {
             if (isFirstRun)
             {
-                //ShowQuickStartGuide(isFirstRun: true);
                 Warning360Safe();
             }
         }
@@ -641,33 +640,6 @@ namespace MGestures.App
             }
         }
 
-        static void ShowQuickStartGuide(bool isFirstRun=false)
-        {
-            var t = new Thread(() =>
-            {
-                bool createdNew;
-                var mut = new Mutex(true, Constants.Identifier + "QuickStartGuideWindow", out createdNew);
-                if (!createdNew) return;
-                
-                using (var frm = new QuickStartGuideForm())
-                {
-                    Application.Run(frm);
-                    mut.Close();
-                }
-
-                if(isFirstRun)
-                {
-                    //Open again to show settings
-                    //Process.Start(Application.ExecutablePath);
-                }
-
-                GC.Collect();
-            }) { IsBackground = true };
-
-            t.SetApartmentState(ApartmentState.STA);
-            t.Start();
-        }
-
         static string GetPauseResumeHotkeyString()
         {
             var hk = hotkeyMgr.GetRegisteredHotKeyById(ConfigKeys.PauseResumeHotKey);
@@ -693,9 +665,6 @@ namespace MGestures.App
 
             var menuItem_settings = new ToolStripMenuItem() { Text = "设置" };
             menuItem_settings.Click += menuItem_settings_Click;
-
-            //var menuItem_showQuickStart = new ToolStripMenuItem() { Text = "快速入门" };
-            //menuItem_showQuickStart.Click += (sender, args) => ShowQuickStartGuide();
 
             /*var menuItem_toggleTray = new MenuItem() { Text = "隐藏 (Shift + 左键 + 中键)" };
             menuItem_toggleTray.Click += (sender, args) =>
