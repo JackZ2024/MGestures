@@ -22,6 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MGestures.Updater\MGestures.Updater.csproj" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained;PublishSingleFile" />
     <COMReference Include="IWshRuntimeLibrary">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
@@ -73,4 +74,15 @@
 		<None Include=".\UpdateLog.txt" CopyToOutputDirectory="PreserveNewest" TargetPath="UpdateLog.txt" LinkBase="." />
 	</ItemGroup>
 
+  <Target Name="IncludeUpdater" AfterTargets="Build" BeforeTargets="GetCopyToPublishDirectoryItems">
+    <ItemGroup>
+      <UpdaterFiles Include="..\MGestures.Updater\bin\$(Configuration)\net8.0-windows\MGestures.Updater.*" Exclude="..\MGestures.Updater\bin\$(Configuration)\net8.0-windows\*.pdb" />
+      <Content Include="@(UpdaterFiles)" Link="updater\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+    <Copy SourceFiles="@(UpdaterFiles)" DestinationFolder="$(OutDir)updater" SkipUnchangedFiles="true" />
+    <Error Condition="!Exists('$(OutDir)updater\MGestures.Updater.exe')" Text="更新器未构建，不能生成完整的更新包。" />
+  </Target>
+  <Target Name="CopyUpdaterToPublish" AfterTargets="Publish" DependsOnTargets="IncludeUpdater">
+    <Copy SourceFiles="@(UpdaterFiles)" DestinationFolder="$(PublishDir)updater" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

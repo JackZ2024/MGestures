@@ -9,6 +9,13 @@ namespace MGestures.App
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
         public bool AutoStart { get; set; } = true;
         public bool AutoCheckForUpdate { get; set; } = true;
+        public string SkippedUpdateVersion { get; set; } = "";
+        // 仅接收此前每日检查版本保存的字段，避免严格配置校验将现有设置判为损坏。
+        // 不再记录检查时间，也不将这两个废弃字段写入配置。
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public System.DateTimeOffset? LastUpdateCheckUtc { get => null; set { } }
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string? LastUpdateCheckRepository { get => null; set { } }
         public GestureTriggerButton TriggerButton { get; set; } =
             GestureTriggerButton.Right | GestureTriggerButton.Middle | GestureTriggerButton.X;
         public int InitialValidMove { get; set; } = 4;

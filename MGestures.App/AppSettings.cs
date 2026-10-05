@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,25 +10,8 @@ namespace MGestures.App
 {
     internal static class AppSettings
     {
-        public static string CheckForUpdateUrl
-        {
-            get
-            {
-
-#if DEBUG
-                return ConfigurationManager.AppSettings.Get(Constants.CheckForUpdateUrlAppSettingKey);// "http://localhost:1226/projects/latestVersion?product=MGestures";
-
-#else
-                return ConfigurationManager.AppSettings.Get(Constants.CheckForUpdateUrlAppSettingKey);
-
-#endif
-            }
-        }
-
-        public static string ProductHomePage
-        {
-            get { return ConfigurationManager.AppSettings.Get(Constants.ProductHomePageAppSettingKey); }
-        }
+        // 填写公开仓库地址后重新编译，例如 https://github.com/your-name/MGestures
+        public const string GitHubRepositoryUrl = "";
 
         public static string UserDataDirectory
         {

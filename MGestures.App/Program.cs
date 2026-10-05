@@ -12,7 +12,6 @@ using MGestures.View.Impl.Windows;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -43,6 +42,9 @@ namespace MGestures.App
         static SynchronizationContext uiContext;
         static bool resumeAfterSessionUnlock;
         static bool resumeAfterPowerResume;
+        static bool shuttingDown;
+        static bool sessionLocked;
+        static Win32MousePathTracker2 updatePathTracker;
         
         //for adding hotkey
         static ToolStripMenuItem menuItem_pause;
@@ -53,6 +55,18 @@ namespace MGestures.App
             Trace.Listeners.Add(new DetailedConsoleListener());
 
             System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
+
+            using (var updateGate = new Mutex(false, MGestures.Common.Updates.UpdateJob.UpdateMutexName))
+            {
+                var acquired = false;
+                try { acquired = updateGate.WaitOne(0); } catch (AbandonedMutexException) { acquired = true; }
+                if (!acquired)
+                {
+                    MessageBox.Show("软件正在更新，请等待更新完成后再启动。", "MGestures");
+                    return;
+                }
+                updateGate.ReleaseMutex();
+            }
 
             if (IsDuplicateInstance())
             {
@@ -263,6 +277,7 @@ namespace MGestures.App
 #region Create Components
             intentFinder = new Win32GestrueIntentFinder(intentStore);
             var pathTracker = new Win32MousePathTracker2();
+            updatePathTracker = pathTracker;
             gestureParser = new GestureParser(pathTracker, intentFinder);
 
             gestureView = new CanvasWindowGestureView(gestureParser);
@@ -382,9 +397,10 @@ namespace MGestures.App
                 }
             }
             //是否检查更新
-            if (config.Settings.AutoCheckForUpdate)
+            if (config.Settings.AutoCheckForUpdate && !string.IsNullOrWhiteSpace(AppSettings.GitHubRepositoryUrl))
             {
                 var checkForUpdateTimer = new Timer { Interval = Constants.AutoCheckForUpdateInterval };
+                componentsToDispose.Add(checkForUpdateTimer);
 
                 checkForUpdateTimer.Tick += (sender, args) =>
                 {
@@ -408,6 +424,7 @@ namespace MGestures.App
             switch (e.Reason)
             {
                 case SessionSwitchReason.SessionLock:
+                    sessionLocked = true;
                     Debug.WriteLine("SessionLock: pausing gesture tracking");
                     gestureView.ForceHide();
                     resumeAfterSessionUnlock = !gestureParser.IsPaused;
@@ -415,6 +432,7 @@ namespace MGestures.App
                     break;
 
                 case SessionSwitchReason.SessionUnlock:
+                    sessionLocked = false;
                     Debug.WriteLine("SessionUnlock: resuming gesture tracking");
                     if (resumeAfterSessionUnlock) gestureParser.Resume();
                     resumeAfterSessionUnlock = false;
@@ -475,47 +493,80 @@ namespace MGestures.App
 
 #endregion
 
-        //仅在启动一段时间后检查一次更新，
+        static VersionChecker automaticUpdateChecker;
+        static UpdateInfoForm updateDialog;
+        static readonly HashSet<string> promptedUpdateVersions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        internal static void ShowUpdate(VersionInfo info, bool manual, Form owner = null)
+        {
+            if (shuttingDown || !info.ShouldPrompt(Application.ProductVersion, config.Settings.SkippedUpdateVersion, manual)) return;
+            if (updateDialog != null && !updateDialog.IsDisposed)
+            {
+                if (manual) updateDialog.Activate();
+                return;
+            }
+            if (!manual && promptedUpdateVersions.Contains(info.NormalizedVersion)) return;
+            promptedUpdateVersions.Add(info.NormalizedVersion);
+            updateDialog = new UpdateInfoForm(info, version =>
+            {
+                var previous = config.Settings.SkippedUpdateVersion;
+                config.Settings.SkippedUpdateVersion = version;
+                try { config.Save(); }
+                catch { config.Settings.SkippedUpdateVersion = previous; throw; }
+            });
+            updateDialog.UpdateReady += () =>
+            {
+                shuttingDown = true;
+                // Run the existing finally/Dispose path after the update dialog has closed.
+                Application.ExitThread();
+            };
+            updateDialog.FormClosed += (_, _) => updateDialog = null;
+            if (owner == null) updateDialog.Show();
+            else updateDialog.Show(owner);
+        }
+
+        internal static void SaveBeforeUpdate()
+        {
+            config.Save();
+            intentStore.Save();
+        }
+
+        static void OfferAutomaticUpdate(VersionInfo info)
+        {
+            if (shuttingDown || !config.Settings.AutoCheckForUpdate ||
+                !info.ShouldPrompt(Application.ProductVersion, config.Settings.SkippedUpdateVersion, false)) return;
+            // Defer the startup prompt while the session is locked or a full-screen app is active.
+            var deferred = new Timer { Interval = 2000 };
+            componentsToDispose.Add(deferred);
+            void TryShow()
+            {
+                if (shuttingDown || !config.Settings.AutoCheckForUpdate || promptedUpdateVersions.Contains(info.NormalizedVersion))
+                { deferred.Stop(); return; }
+                if (sessionLocked || updatePathTracker.IsInFullScreenMode()) return;
+                deferred.Stop();
+                ShowUpdate(info, false);
+            }
+            deferred.Tick += (_, _) => TryShow();
+            deferred.Start();
+            TryShow();
+        }
+
+        // 每次启动稍后自动尝试一次，不在运行期间重复检查。
         static void ScheduledUpdateCheck(object sender, NotifyIcon tray)
         {
             if (!config.Settings.AutoCheckForUpdate) return;
-            return;
-            var checker = new VersionChecker(AppSettings.CheckForUpdateUrl);
+            if (automaticUpdateChecker != null && automaticUpdateChecker.IsBusy) return;
+            automaticUpdateChecker?.Dispose();
+            var checker = automaticUpdateChecker = new VersionChecker(AppSettings.GitHubRepositoryUrl);
             checker.Finished += info =>
             {
-                var whatsNew = info.WhatsNew.Length > 50 ? info.WhatsNew.Substring(0, 50) : info.WhatsNew;
-                
-                if (info.Version != Application.ProductVersion)
-                {
-                    tray.BalloonTipClicked += (o, args) =>
-                    {
-                        if (info.Version == Application.ProductVersion) return;
-                        using (var frm = new UpdateInfoForm(ConfigurationManager.AppSettings.Get(Constants.ProductHomePageAppSettingKey), info))
-                        {
-                            frm.ShowDialog();
-                            tray.Visible = config.Settings.TrayIconVisible;
-                        }
-                    };
-                    if (!tray.Visible)
-                    {
-                        tray.Visible = true;
-                    }
-                    
-                    tray.ShowBalloonTip(1000 * 15, Application.ProductName + "新版本可用!", "版本:" + info.Version + "\n" + whatsNew, ToolTipIcon.Info);
-                }
-
                 checker.Dispose();
-                checker = null;
-
-                GC.Collect();
+                RunOnUiThread(() => OfferAutomaticUpdate(info));
             };
             checker.ErrorHappened += e =>
             {
                 Debug.WriteLine("Program.ScheduledUpdateCheck Error:" + e.Message);
                 checker.Dispose();
-                checker = null;
-
-                GC.Collect();
             };
 
             checker.CheckAsync();
@@ -704,10 +755,12 @@ namespace MGestures.App
 
         static void Dispose()
         {
+            shuttingDown = true;
             try
             {
                 SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
                 SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+                automaticUpdateChecker?.Dispose();
 
                 if (gestureParser != null) gestureParser.Stop();
                 if (trayIcon != null) trayIcon.Dispose();

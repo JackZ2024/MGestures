@@ -125,13 +125,18 @@ namespace MGestures.App.Gui.Windows
             if (_versionChecker == null)
             {
 
-                _versionChecker = new VersionChecker(AppSettings.CheckForUpdateUrl);
+                _versionChecker = new VersionChecker(AppSettings.GitHubRepositoryUrl);
+                _versionChecker.Canceled += () => UpdateCheckUi(() =>
+                {
+                    btn_checkUpdateNow.Text = "立即检查";
+                    btn_checkUpdateNow.Image = null;
+                });
 
                 _versionChecker.Finished += version =>
                 {
                     if (btn_checkUpdateNow.IsDisposed) return;
 
-                    btn_checkUpdateNow.Invoke(new Action(() =>
+                    UpdateCheckUi(() =>
                     {
                         //btn_checkUpdateNow.Enabled = true;
                         btn_checkUpdateNow.Text = "立即检查";
@@ -148,12 +153,9 @@ namespace MGestures.App.Gui.Windows
                         }
 
 
-                        if (version.Version != Application.ProductVersion)
+                        if (version.IsNewerThan(Application.ProductVersion))
                         {
-                            using (var frm = new UpdateInfoForm(AppSettings.ProductHomePage, version))
-                            {
-                                frm.ShowDialog();
-                            }
+                            Program.ShowUpdate(version, true, this);
                         }
                         else
                         {
@@ -162,7 +164,7 @@ namespace MGestures.App.Gui.Windows
 
                         }
 
-                    }));
+                    });
                 };
 
                 _versionChecker.ErrorHappened += exception =>
@@ -171,7 +173,7 @@ namespace MGestures.App.Gui.Windows
                     Console.WriteLine(exception);
 #endif
 
-                    btn_checkUpdateNow.Invoke(new Action(() =>
+                    UpdateCheckUi(() =>
                     {
                         //btn_checkUpdateNow.Enabled = true;
                         btn_checkUpdateNow.Text = "立即检查";
@@ -180,8 +182,8 @@ namespace MGestures.App.Gui.Windows
 
 
                         errorProvider.SetIconPadding(btn_checkUpdateNow, 4);
-                        errorProvider.SetError(btn_checkUpdateNow, string.Format("可能由于网络错误，检查更新失败: \n{0}", exception.Message));
-                    }));
+                        errorProvider.SetError(btn_checkUpdateNow, "检查更新失败：\n" + exception.Message);
+                    });
                 };
 
             }
@@ -189,6 +191,27 @@ namespace MGestures.App.Gui.Windows
 
             _versionChecker.CheckAsync();
 
+        }
+
+        private void UpdateCheckUi(Action update)
+        {
+            if (IsDisposed || Disposing || btn_checkUpdateNow.IsDisposed || !IsHandleCreated) return;
+            if (!InvokeRequired)
+            {
+                update();
+                return;
+            }
+            try
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    if (!IsDisposed && !Disposing && !btn_checkUpdateNow.IsDisposed) update();
+                }));
+            }
+            catch (InvalidOperationException)
+            {
+                // 窗口可能在检查状态与投递回调之间关闭。
+            }
         }
 
 

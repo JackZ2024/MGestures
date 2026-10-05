@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36616.10
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12224.181 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MGestures.Core", "MGestures.Core\MGestures.Core.csproj", "{9A00705E-C38E-43AE-BDEF-D2DBCFF79889}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MGestures.App", "MGestures.
 		{9A00705E-C38E-43AE-BDEF-D2DBCFF79889} = {9A00705E-C38E-43AE-BDEF-D2DBCFF79889}
 		{E5BA9CDE-0E44-4AE8-BD93-1990045C0BD2} = {E5BA9CDE-0E44-4AE8-BD93-1990045C0BD2}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MGestures.Updater", "MGestures.Updater\MGestures.Updater.csproj", "{03E7BB5E-3DA2-462E-BD57-F97077D42486}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,6 +76,14 @@ Global
 		{22A8B869-1781-4B75-A26E-D1FCE7DA28B4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{22A8B869-1781-4B75-A26E-D1FCE7DA28B4}.Release|x64.ActiveCfg = Release|Any CPU
 		{22A8B869-1781-4B75-A26E-D1FCE7DA28B4}.Release|x64.Build.0 = Release|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Debug|x64.Build.0 = Debug|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Release|x64.ActiveCfg = Release|Any CPU
+		{03E7BB5E-3DA2-462E-BD57-F97077D42486}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
